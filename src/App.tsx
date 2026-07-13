@@ -12,35 +12,35 @@ function App() {
     setGreetMsg(await invoke("greet", { name }));
   }
   async function testOllamaStream() {
-  const res = await fetch("http://127.0.0.1:11434/api/chat", {
-    method: "POST",
-    body: JSON.stringify({
-      model: "minimax-m3:cloud",
-      messages: [{ role: "user", content: "Say hi in 5 words" }],
-      stream: true, // <- the only change to the request
-    }),
-  });
+    const res = await fetch("http://127.0.0.1:11434/api/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        model: "minimax-m3:cloud",
+        messages: [{ role: "user", content: "Say hi in 5 words" }],
+        stream: true, // <- the only change to the request
+      }),
+    });
 
-  const reader = res.body!.getReader();
-  const decoder = new TextDecoder();
-  let full = "";
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let full = "";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    const chunkText = decoder.decode(value, { stream: true });
-    // Ollama sends newline-delimited JSON objects, possibly several per chunk
-    for (const line of chunkText.split("\n")) {
-      if (!line.trim()) continue;
-      const parsed = JSON.parse(line);
-      if (parsed.message?.content) {
-        full += parsed.message.content;
-        console.log(full); // watch it grow token by token
+      const chunkText = decoder.decode(value, { stream: true });
+      // Ollama sends newline-delimited JSON objects, possibly several per chunk
+      for (const line of chunkText.split("\n")) {
+        if (!line.trim()) continue;
+        const parsed = JSON.parse(line);
+        if (parsed.message?.content) {
+          full += parsed.message.content;
+          console.log(full); // watch it grow token by token
+        }
       }
     }
   }
-}
 
   return (
     <main className="container">
