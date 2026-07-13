@@ -1,6 +1,6 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, Channel } from "@tauri-apps/api/core";
 import "./App.css";
 
 function App() {
@@ -72,9 +72,32 @@ function App() {
           placeholder="Enter a name..."
         />
         <button type="submit">Greet</button>
+        <br />
+        <input
+          id="message-input"
+          onChange={(e) => setName(e.currentTarget.value)}
+          placeholder="How can i help you today"
+        />
         <button onClick={testOllamaStream}>Test</button>
+        <button onClick={async () => {
+          const channel = new Channel<string>();
+          channel.onmessage = (token) => {
+            console.log("token:", token);
+          };
+          await invoke("ask_ollama", { prompt: "Say hi in 5 words", channel });
+        }}>
+          Ask Ollama (streaming)
+        </button>
+       
+        
       </form>
       <p>{greetMsg}</p>
+      <button onClick={async () => {
+        const result = await invoke("ping");
+        console.log(result);
+      }}>
+        Test Ping
+      </button>
     </main>
   );
 }
