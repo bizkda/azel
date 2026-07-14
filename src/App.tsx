@@ -3,7 +3,13 @@ import reactLogo from "./assets/react.svg";
 import { invoke, Channel } from "@tauri-apps/api/core";
 import "./App.css";
 
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+}
 function App() {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
 
@@ -11,94 +17,55 @@ function App() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name }));
   }
-  async function testOllamaStream() {
-    const res = await fetch("http://127.0.0.1:11434/api/chat", {
-      method: "POST",
-      body: JSON.stringify({
-        model: "minimax-m3:cloud",
-        messages: [{ role: "user", content: "Say hi in 5 words" }],
-        stream: true, // <- the only change to the request
-      }),
-    });
+  async function sendMessage(prompt: string) {
+  const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: prompt };
+  const assistantId = crypto.randomUUID();
 
-    const reader = res.body!.getReader();
-    const decoder = new TextDecoder();
-    let full = "";
+  setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", content: "" }]);
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+  const channel = new Channel<string>();
+  channel.onmessage = (token) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + token } : m))
+    );
+  };
 
-      const chunkText = decoder.decode(value, { stream: true });
-      // Ollama sends newline-delimited JSON objects, possibly several per chunk
-      for (const line of chunkText.split("\n")) {
-        if (!line.trim()) continue;
-        const parsed = JSON.parse(line);
-        if (parsed.message?.content) {
-          full += parsed.message.content;
-          console.log(full); // watch it grow token by token
-        }
-      }
-    }
+  await invoke("ask_ollama", { prompt, channel });
   }
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <main style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+        {messages.map((m) => (
+          <div key={m.id} style={{ margin: "8px 0", textAlign: m.role === "user" ? "right" : "left" }}>
+            <b>{m.role}:</b> {m.content}
+          </div>
+        ))}
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-        <br />
-        <input
-          id="message-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="How can i help you today"
-        />
-        <button onClick={testOllamaStream}>Test</button>
-        <button onClick={async () => {
-          const channel = new Channel<string>();
-          channel.onmessage = (token) => {
-            console.log("token:", token);
-          };
-          await invoke("ask_ollama", { prompt: "Say hi in 5 words", channel });
-        }}>
-          Ask Ollama (streaming)
-        </button>
-       
-        
-      </form>
-      <p>{greetMsg}</p>
-      <button onClick={async () => {
-        const result = await invoke("ping");
-        console.log(result);
-      }}>
-        Test Ping
-      </button>
+      <ChatInput onSubmit={sendMessage} />
     </main>
+  );
+}
+function ChatInput({ onSubmit }: { onSubmit: (text: string) => void }) {
+  const [value, setValue] = useState("");
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (value.trim()) {
+          onSubmit(value);
+          setValue("");
+        }
+      }}
+    >
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Ask anything…"
+        style={{ width: "100%", padding: 10, boxSizing: "border-box" }}
+      />
+    </form>
   );
 }
 
