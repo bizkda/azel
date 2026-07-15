@@ -29,7 +29,7 @@ async fn ask_ollama(prompt: String, channel: Channel<String>) -> Result<(), Stri
     let client = reqwest::Client::new();
 
     let body = serde_json::json!({
-        "model": "llama3.2:latest",
+        "model": "minimax-m3:cloud",
         "messages": [{ "role": "user", "content": prompt }],
         "stream": true
     });

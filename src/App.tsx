@@ -1,22 +1,34 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
 import { invoke, Channel } from "@tauri-apps/api/core";
 import "./App.css";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
 }
+function MessageBubble({ role, content }: { role: "user" | "assistant"; content: string }) {
+  const isUser = role === "user";
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} px-3 py-1`}>
+      <Card
+        className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap border-none shadow-sm ${
+          isUser
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground"
+        }`}
+      >
+        {content || "…"}
+      </Card>
+    </div>
+  );
+}
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
   async function sendMessage(prompt: string) {
   const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: prompt };
   const assistantId = crypto.randomUUID();
@@ -34,18 +46,17 @@ function App() {
   }
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+    <main className="flex flex-col h-screen">
+      <div className="container px-4 py-2 flex-1 overflow-y-auto">
         {messages.map((m) => (
-          <div key={m.id} style={{ margin: "8px 0", textAlign: m.role === "user" ? "right" : "left" }}>
-            <b>{m.role}:</b> {m.content}
-          </div>
+          <MessageBubble key={m.id} role={m.role} content={m.content} />
         ))}
       </div>
       <ChatInput onSubmit={sendMessage} />
     </main>
   );
 }
+
 function ChatInput({ onSubmit }: { onSubmit: (text: string) => void }) {
   const [value, setValue] = useState("");
 
@@ -59,12 +70,21 @@ function ChatInput({ onSubmit }: { onSubmit: (text: string) => void }) {
         }
       }}
     >
-      <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Ask anything…"
-        style={{ width: "100%", padding: 10, boxSizing: "border-box" }}
-      />
+      <div className="send-msg flex justify-end gap-2 p-2 bg-background">        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Ask anything…"
+          className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+        />
+        <Button
+          type="submit"
+          className="hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50"
+        >
+          Send
+        </Button>
+      </div>
+      
+
     </form>
   );
 }

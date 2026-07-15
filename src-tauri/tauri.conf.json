@@ -15,7 +15,9 @@
         "title": "azel",
         "width": 800,
         "height": 600,
-        "alwaysOnTop": true
+        "alwaysOnTop": true,
+        "minWidth": 405,
+        "minHeight": 100
       }
     ],
     "security": {
