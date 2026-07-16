@@ -1,15 +1,4 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-
-#[derive(serde::Serialize)]
-struct ChatMessage {
-    role: String,
-    content: String,
-}
 
 #[derive(serde::Deserialize)]
 struct OllamaResponse {
@@ -23,14 +12,29 @@ struct OllamaMessage {
 
 use tauri::ipc::Channel;
 use futures_util::StreamExt;
+#[derive(serde::Deserialize)]
+struct IncomingMessage {
+    role: String,
+    content: String,
+}
+
+use global_hotkey::{
+    hotkey::{Code, HotKey, Modifiers},
+    GlobalHotKeyEvent, GlobalHotKeyManager,
+};
+use tauri::Manager;
 
 #[tauri::command]
-async fn ask_ollama(prompt: String, channel: Channel<String>) -> Result<(), String> {
+async fn ask_ollama(history: Vec<IncomingMessage>, model: String, channel: Channel<String>) -> Result<(), String> {
     let client = reqwest::Client::new();
 
+    let messages: Vec<_> = history.iter().map(|m| {
+        serde_json::json!({ "role": m.role, "content": m.content })
+    }).collect();
+
     let body = serde_json::json!({
-        "model": "minimax-m3:cloud",
-        "messages": [{ "role": "user", "content": prompt }],
+        "model": model,
+        "messages": messages,
         "stream": true
     });
 
@@ -61,6 +65,39 @@ async fn ask_ollama(prompt: String, channel: Channel<String>) -> Result<(), Stri
 
     Ok(())
 }
+
+#[derive(serde::Serialize)]
+struct ModelInfo {
+    name: String,
+}
+
+
+// retriving the modles that exists in your ollama setup
+#[derive(serde::Deserialize)]
+struct TagsResponse {
+    models: Vec<TagModel>,
+}
+
+#[derive(serde::Deserialize)]
+struct TagModel {
+    name: String,
+}
+#[tauri::command]
+async fn list_models() -> Result<Vec<ModelInfo>, String> {
+    let client = reqwest::Client::new();
+    let res = client
+        .get("http://127.0.0.1:11434/api/tags")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let parsed: TagsResponse = res.json().await.map_err(|e| e.to_string())?;
+
+    Ok(parsed.models.into_iter().map(|m| ModelInfo { name: m.name }).collect())
+}
+
+
+// hyperland is bit complicated for window handling so we will handle it by itslef
 fn ensure_hyprland_rule() {
     // Only do anything if we're actually running under Hyprland.
     if std::env::var("HYPRLAND_INSTANCE_SIGNATURE").is_err() {
@@ -72,7 +109,7 @@ fn ensure_hyprland_rule() {
 
     let marker = "#------- FLOATING AI ASSISTANT (azel, auto-added) ------------------";
     let rule_block = format!(
-        "\n{marker}\nwindowrule {{\n    name = \"azel_rule\"\n    match:class = ^(azel)$\n    float = on\n    pin = on\n}}\n"
+    "\n{marker}\nwindowrule {{\n    name = \"azel_rule\"\n    match:class = ^(azel)$\n    float = on\n    pin = on\n}}\nexec-once = hyprctl dispatch movetoworkspacesilent special:azel\nbind = CTRL, SPACE, togglespecialworkspace, azel\n"
     );
 
     let existing = std::fs::read_to_string(&conf_path).unwrap_or_default();
@@ -85,19 +122,42 @@ fn ensure_hyprland_rule() {
         let _ = std::process::Command::new("hyprctl").arg("reload").output();
     }
 }
+fn setup_hotkey(app: &tauri::AppHandle) -> GlobalHotKeyManager {
+    let manager = GlobalHotKeyManager::new().expect("failed to create hotkey manager");
+    let hotkey = HotKey::new(Some(Modifiers::CONTROL), Code::Space);
+    manager.register(hotkey).expect("failed to register hotkey");
 
+    let app_handle = app.clone();
+    GlobalHotKeyEvent::set_event_handler(Some(move |event: GlobalHotKeyEvent| {
+        if event.state == global_hotkey::HotKeyState::Pressed {
+            if let Some(window) = app_handle.get_webview_window("main") {
+                let visible = window.is_visible().unwrap_or(false);
+                if visible {
+                    let _ = window.hide();
+                } else {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+        }
+    }));
+
+    manager
+}
 fn dirs_next_home() -> Option<std::path::PathBuf> {
     std::env::var("HOME").ok().map(std::path::PathBuf::from)
 }
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .setup(|_app| {
+        .setup(|app| {
             ensure_hyprland_rule();
+            let manager = setup_hotkey(app.handle());
+            app.manage(manager); // now this refers to the manager returned above
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, ask_ollama])
+        .invoke_handler(tauri::generate_handler![ ask_ollama , list_models])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
