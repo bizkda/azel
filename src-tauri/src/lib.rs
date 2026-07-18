@@ -18,10 +18,6 @@ struct IncomingMessage {
     content: String,
 }
 
-use global_hotkey::{
-    hotkey::{Code, HotKey, Modifiers},
-    GlobalHotKeyEvent, GlobalHotKeyManager,
-};
 use tauri::Manager;
 
 #[tauri::command]
@@ -96,7 +92,9 @@ async fn list_models() -> Result<Vec<ModelInfo>, String> {
     Ok(parsed.models.into_iter().map(|m| ModelInfo { name: m.name }).collect())
 }
 
-
+fn dirs_next_home() -> Option<std::path::PathBuf> {
+    std::env::var("HOME").ok().map(std::path::PathBuf::from)
+}
 // hyperland is bit complicated for window handling so we will handle it by itslef
 fn ensure_hyprland_rule() {
     // Only do anything if we're actually running under Hyprland.
@@ -122,42 +120,44 @@ fn ensure_hyprland_rule() {
         let _ = std::process::Command::new("hyprctl").arg("reload").output();
     }
 }
-fn setup_hotkey(app: &tauri::AppHandle) -> GlobalHotKeyManager {
-    let manager = GlobalHotKeyManager::new().expect("failed to create hotkey manager");
-    let hotkey = HotKey::new(Some(Modifiers::CONTROL), Code::Space);
-    manager.register(hotkey).expect("failed to register hotkey");
 
-    let app_handle = app.clone();
-    GlobalHotKeyEvent::set_event_handler(Some(move |event: GlobalHotKeyEvent| {
-        if event.state == global_hotkey::HotKeyState::Pressed {
-            if let Some(window) = app_handle.get_webview_window("main") {
-                let visible = window.is_visible().unwrap_or(false);
-                if visible {
-                    let _ = window.hide();
-                } else {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-        }
-    }));
+use tauri_plugin_global_shortcut::{Code, Modifiers, ShortcutState};
+use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
-    manager
-}
-fn dirs_next_home() -> Option<std::path::PathBuf> {
-    std::env::var("HOME").ok().map(std::path::PathBuf::from)
-}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let visible = window.is_visible().unwrap_or(false);
+                            if visible {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    }
+                })
+                .build(),
+        )
         .setup(|app| {
             ensure_hyprland_rule();
-            let manager = setup_hotkey(app.handle());
-            app.manage(manager); // now this refers to the manager returned above
+
+            let shortcut = tauri_plugin_global_shortcut::Shortcut::new(
+                Some(Modifiers::CONTROL),
+                Code::Space,
+            );
+            app.global_shortcut().register(shortcut)?;
+
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![ ask_ollama , list_models])
+        .invoke_handler(tauri::generate_handler![ ask_ollama, list_models])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
