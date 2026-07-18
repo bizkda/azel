@@ -57,41 +57,44 @@ function App() {
 };
 
   useEffect(() => {
-    //invoke<{ name: string }[]>("list_models").then((result) => {
-      //setModels(result.map((m) => m.name));
-      //if (result.length > 0) setSelectedModel(result[0].name);
-    //});
+    invoke<{ name: string }[]>("list_models").then((result) => {
+      setModels(result.map((m) => m.name));
+      if (result.length > 0) setSelectedModel(result[0].name);
+    });
   }, []);
 
   return (
     <main className="bg-[#344e41] flex flex-col h-screen">
-      {models.length === 0 ? (
-       <div className="text-sm text-white/80 px-2 py-1 ">
-          No models found —{" "}
-          <a href="https://ollama.com" className="underline hover:text-white">
-            set up Ollama
-          </a>{" "}
-          to get started.
-        </div>
-        ) : (
-          <Select value={selectedModel} onValueChange={handleModelChange}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select model" />
-            </SelectTrigger>
-            <SelectContent>
-              {models.map((m) => (
-                <SelectItem key={m} value={m}>{m}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )
-      }
+     {models.length > 0 && (
+      <div className="flex items-center justify-center h-14 mt-4">
+      <Select value={selectedModel} onValueChange={handleModelChange}>
+      <SelectTrigger className="w-48 mx-auto">
+            <SelectValue  className="text-primary-foreground" placeholder="Select model" />
+        </SelectTrigger>
+        <SelectContent >
+          {models.map((m) => (
+            <SelectItem key={m} value={m}>{m}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      </div>
+    )}
       <div className="container px-4 py-2 flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center text-center">
             <div>
               <h1 className="text-2xl font-semibold font-sans text-white">Hey, I'm Azel</h1>
-              <p className="text-sm font-sans text-white/70 mt-1">Ask me anything to get started.</p>
+                  {models.length === 0 ? (
+                  <div className="text-sm text-white/80 px-2 py-1 ">
+                      No models found —{" "}
+                      <a href="https://ollama.com" className="underline hover:text-white">
+                        set up Ollama
+                      </a>{" "}
+                      to get started.
+                    </div>) : (
+                      <p className="text-sm font-sans text-white/70 mt-1">Ask me anything to get started.</p>
+                    )
+                  }
             </div>
           </div>
         ) : (
