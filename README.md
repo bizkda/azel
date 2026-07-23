@@ -7,17 +7,17 @@ A fast, native desktop chat app built with Tauri, letting you chat with local or
 
 ## Features
 
-- 🗨️ Clean, native chat interface
-- ⚡ Lightweight — built with Tauri (Rust backend + web frontend), not Electron
-- 🔀 Switch between multiple AI models
-- 🪟 Quick-toggle floating window (Hyprland: `CTRL + SPACE`)
-- 🖥️ Cross-platform: Linux, macOS, Windows *(update to match what you actually support)*
+- Clean, native chat interface
+- Lightweight — built with Tauri (Rust backend + web frontend)
+- Switch between multiple AI models
+- Quick-toggle floating window (Hyprland: `CTRL + SPACE`)
+- Cross-platform: Linux, macOS, Windows *(update to match what you actually support)*
 
 ## Installation
 
 ### Download (recommended)
 
-Grab the latest release for your platform from the [Releases page](https://github.com/yourusername/azel/releases).
+Grab the latest release for your platform from the [Releases page](https://github.com/bizkda/azel/releases).
 
 - **Linux:** `.AppImage` or `.deb`
 - **macOS:** `.dmg`
