@@ -3,6 +3,7 @@
 A fast, native desktop chat app built with Tauri, letting you chat with local or remote AI models right from your desktop.
 
 ![Azel screenshot](docs/screenshot.png)
+![Azel screenshot](docs/screenshot1.png)
 <!-- Replace with an actual screenshot or demo GIF before publishing -->
 
 ## Features
