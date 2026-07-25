@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'   # triggers on tags like v0.1.0, v1.2.3, etc.
 
+permissions:
+  contents: write   # required for tauri-action to create releases and upload assets
+
 jobs:
   release:
     strategy:
@@ -29,7 +32,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
