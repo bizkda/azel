@@ -7,11 +7,11 @@ A fast, native desktop chat app built with Tauri, letting you chat with local or
 
 ## Features
 
-- Clean, native chat interface
-- Lightweight — built with Tauri (Rust backend + web frontend)
-- Switch between multiple AI models
-- Quick-toggle floating window (Hyprland: `CTRL + SPACE`)
-- Cross-platform: Linux, macOS, Windows *(update to match what you actually support)*
+-  Clean, native chat interface
+-  Lightweight — built with Tauri (Rust backend + web frontend), not Electron
+-  Switch between multiple AI models
+-  Quick-toggle floating window (Hyprland: `CTRL + SPACE`)
+-  Cross-platform: Linux, Windows, and macOS
 
 ## Installation
 
@@ -19,9 +19,9 @@ A fast, native desktop chat app built with Tauri, letting you chat with local or
 
 Grab the latest release for your platform from the [Releases page](https://github.com/bizkda/azel/releases).
 
-- **Linux:** `.AppImage` or `.deb`
-- **macOS:** `.dmg`
-- **Windows:** `.msi`
+- **Linux:** `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL/openSUSE), or `.AppImage` (any distro, no install needed)
+- **Windows:** `.msi` or `.exe` (NSIS installer)
+- **macOS:** `.dmg` — separate builds for Apple Silicon and Intel
 
 ### Build from source
 
@@ -31,13 +31,15 @@ Grab the latest release for your platform from the [Releases page](https://githu
 - [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS
 
 ```bash
-git clone https://github.com/yourusername/azel.git
+git clone https://github.com/bizkda/azel.git
 cd azel
 npm install
 npm run tauri build
 ```
 
-The built app will be in `src-tauri/target/release/bundle/`.
+The built app and installers will be in `src-tauri/target/release/` (raw binary) and `src-tauri/target/release/bundle/` (platform installers — `.deb`/`.rpm`/`.AppImage` on Linux, `.msi`/`.exe` on Windows, `.dmg` on macOS).
+
+> **Note:** cross-compiling isn't supported — building on Linux only produces Linux installers, building on Windows only produces Windows installers, and so on. To get all platforms, either build on each OS separately or use the GitHub Actions release workflow (see below).
 
 ## Usage
 
@@ -72,6 +74,17 @@ exec-once = hyprctl dispatch movetoworkspacesilent special:azel
 bind = CTRL, SPACE, togglespecialworkspace, azel
 ```
 
+## Releasing (for maintainers)
+
+New releases are built and published automatically via GitHub Actions for Linux, Windows, and macOS. To cut a new release:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+This triggers `.github/workflows/release.yml`, which builds all platform installers and attaches them to a **draft** GitHub Release. Review the draft, then publish it manually from the Releases tab.
+
 ## Tech stack
 
 - **Frontend:** React + TypeScript
@@ -80,7 +93,7 @@ bind = CTRL, SPACE, togglespecialworkspace, azel
 
 ## Troubleshooting
 
-- **App won't launch on Linux:** make sure you've made the AppImage executable: `chmod +x Azel.AppImage`
+- **AppImage won't launch on Linux:** make sure it's executable: `chmod +x azel_0.1.0_amd64.AppImage`, then run it directly (`./azel_0.1.0_amd64.AppImage`). Requires `fuse2` on some distros — e.g. `sudo pacman -S fuse2` (Arch) or `sudo apt install libfuse2` (Debian/Ubuntu).
 - **Models not showing up:** confirm your model source is running/reachable, and check the config file path above.
 
 ## License
