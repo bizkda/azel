@@ -1,13 +1,14 @@
 # Azel
 
-A fast, native desktop chat app that you can cal with on click built with Tauri, letting you chat with local or remote AI models right from your desktop.
+A fast, native desktop chat app you can launch with one click — built with Tauri, letting you chat with local or remote AI models right from your desktop.
+
 <table>
-    <tr>
-        <td><img src="docs/screenshot.png" width="400"/></td>
-        <td><img src="docs/screenshot1.png" width="400"/></td> 
-    </tr>
-</table> <!-- Replace with actual screenshots or a demo GIF before publishing -->
-<!-- Replace with an actual screenshot or demo GIF before publishing -->
+  <tr>
+    <td><img src="docs/screenshot.png" width="400"/></td>
+    <td><img src="docs/screenshot1.png" width="400"/></td>
+  </tr>
+</table>
+<!-- Replace with actual screenshots or a demo GIF before publishing -->
 
 ## Features
 
@@ -23,11 +24,23 @@ A fast, native desktop chat app that you can cal with on click built with Tauri,
 
 Grab the latest release for your platform from the [Releases page](https://github.com/bizkda/azel/releases).
 
-- **Linux:** `.deb` (Debian/Ubuntu), `.rpm` (Fedora/RHEL/openSUSE), or `.AppImage` (any distro, no install needed)
+- **Linux:** `.deb` (Debian/Ubuntu) or `.rpm` (Fedora/RHEL/openSUSE). Arch/other distros — use the install script below.
 - **Windows:** `.msi` or `.exe` (NSIS installer)
 - **macOS:** `.dmg` — separate builds for Apple Silicon and Intel
 
-### Build from source
+### Linux install script (Arch and other distros)
+
+For distros without `.deb`/`.rpm` support (e.g. Arch, CachyOS), use the included install script — it builds from source and sets Azel up as a proper desktop app (binary in `/usr/local/bin`, icon, and app launcher entry):
+
+```bash
+git clone https://github.com/bizkda/azel.git
+cd azel
+./install.sh
+```
+
+After that, launch Azel from your app menu/launcher (rofi, wofi, etc.) or by typing `azel` in a terminal.
+
+### Build from source (manual)
 
 **Prerequisites:**
 - [Node.js](https://nodejs.org/) (v18+)
@@ -41,7 +54,7 @@ npm install
 npm run tauri build
 ```
 
-The built app and installers will be in `src-tauri/target/release/` (raw binary) and `src-tauri/target/release/bundle/` (platform installers — `.deb`/`.rpm`/`.AppImage` on Linux, `.msi`/`.exe` on Windows, `.dmg` on macOS).
+The built app and installers will be in `src-tauri/target/release/` (raw binary) and `src-tauri/target/release/bundle/` (platform installers — `.deb`/`.rpm` on Linux, `.msi`/`.exe` on Windows, `.dmg` on macOS).
 
 > **Note:** cross-compiling isn't supported — building on Linux only produces Linux installers, building on Windows only produces Windows installers, and so on. To get all platforms, either build on each OS separately or use the GitHub Actions release workflow (see below).
 
@@ -97,7 +110,6 @@ This triggers `.github/workflows/release.yml`, which builds all platform install
 
 ## Troubleshooting
 
-- **AppImage won't launch on Linux:** make sure it's executable: `chmod +x azel_0.1.0_amd64.AppImage`, then run it directly (`./azel_0.1.0_amd64.AppImage`). Requires `fuse2` on some distros — e.g. `sudo pacman -S fuse2` (Arch) or `sudo apt install libfuse2` (Debian/Ubuntu).
 - **Models not showing up:** confirm your model source is running/reachable, and check the config file path above.
 
 ## License
