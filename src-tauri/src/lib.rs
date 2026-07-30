@@ -127,32 +127,37 @@ use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(
-            tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(|app, _shortcut, event| {
-                    if event.state == ShortcutState::Pressed {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let visible = window.is_visible().unwrap_or(false);
-                            if visible {
-                                let _ = window.hide();
-                            } else {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
+    let builder = tauri::Builder::default();
+
+    let builder = builder.plugin(
+        tauri_plugin_global_shortcut::Builder::new()
+            .with_handler(|app, _shortcut, event| {
+                if event.state == ShortcutState::Pressed {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let visible = window.is_visible().unwrap_or(false);
+                        if visible {
+                            let _ = window.hide();
+                        } else {
+                            let _ = window.show();
+                            let _ = window.set_focus();
                         }
                     }
-                })
-                .build(),
-        )
+                }
+            })
+            .build(),
+    );
+
+    builder
         .setup(|app| {
             ensure_hyprland_rule();
 
-            let shortcut = tauri_plugin_global_shortcut::Shortcut::new(
-                Some(Modifiers::CONTROL),
-                Code::Space,
-            );
-            app.global_shortcut().register(shortcut)?;
+            {
+                let shortcut = tauri_plugin_global_shortcut::Shortcut::new(
+                    Some(Modifiers::CONTROL),
+                    Code::Space,
+                );
+                app.global_shortcut().register(shortcut)?;
+            }
 
             Ok(())
         })
