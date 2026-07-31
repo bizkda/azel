@@ -147,6 +147,7 @@ This triggers `.github/workflows/release.yml`, which builds all platform install
 - **Hyprland: "Pypr can't connect. Is daemon running?"** — the Pyprland daemon isn't running yet. Run `pypr &` manually to start it, or log out/back in so `exec-once = pypr` takes effect automatically.
 - **Hyprland: "Window does not qualify to be pinned"** — usually a window class mismatch. Confirm the real class with `hyprctl clients -j | jq '.[] | select(.class | test("azel"; "i")) | .class'` and make sure it matches exactly (case-sensitive) in both `~/.config/pypr/config.toml` and your `windowrule`.
 - **Models not showing up:** confirm your model source is running/reachable, and check the config file path above.
+                             and make sure ollama is runing by writing `ollama serve` in your terminal.
 
 ## License
 
