@@ -1,6 +1,6 @@
 # Azel
 
-A fast, native desktop chat app you can launch with one click — built with Tauri, letting you chat with local or remote AI models right from your desktop.
+A fast, native desktop chat app you can launch with one click — built with Tauri, letting you chat with local or remote AI models right from your desktop (as for me i use it to translate words while reading).
 
 <table>
   <tr>
