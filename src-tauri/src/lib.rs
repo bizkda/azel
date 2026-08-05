@@ -120,6 +120,24 @@ fn ensure_hyprland_rule() {
         let _ = std::process::Command::new("hyprctl").arg("reload").output();
     }
 }
+fn ensure_ollama_running() {
+    use std::process::Command;
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        let _ = Command::new("ollama")
+            .arg("serve")
+            .creation_flags(CREATE_NO_WINDOW)
+            .spawn();
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = Command::new("ollama").arg("serve").spawn();
+    }
+}
 
 use tauri_plugin_global_shortcut::{Code, Modifiers, ShortcutState};
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
@@ -149,6 +167,7 @@ pub fn run() {
 
     builder
         .setup(|app| {
+            ensure_ollama_running();
             ensure_hyprland_rule();
 
             {
